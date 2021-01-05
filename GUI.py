@@ -11,6 +11,17 @@ import argparse
 scale = 1
 W, H = 800, 600
 
+def process_command():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--database', '-d',
+        type = str,
+        require = True,
+        dest = 'database',
+        help = 'specify the database of food'
+    )
+    return parser.parse_args()
+
 class Data:
     def __init__(self):
         self.name = None
