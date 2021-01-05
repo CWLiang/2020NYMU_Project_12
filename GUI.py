@@ -6,6 +6,7 @@ import sys
 from os import listdir
 from os.path import isdir
 from PIL import ImageTk, Image
+import argparse
 
 scale = 1
 W, H = 800, 600
