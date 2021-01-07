@@ -11,25 +11,30 @@ import argparse
 scale = 1
 W, H = 800, 600
 
-def process_command():
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        '--database', '-d',
-        type = str,
-        require = True,
-        dest = 'database',
-        help = 'specify the database of food'
-    )
-    return parser.parse_args()
 
 class Data:
-    def __init__(self):
+    def __init__(self, database):
         self.name = None
         self.height = None
         self.weight = None
         self.gender = None
         self.age = None
-        self.exerceise = None
+        self.exercise = None
+        
+        print(database)
+        d = list(listdir(database))
+        print(d)
+        sys.exit()
+        for d in listdir(database):
+            for f in listdir(f'{database}/{d}'):
+                print(f)
+        sys.exit()
+        self.items = list()
+        for idx, f in enumerate(files):
+            item = Item(self.scrollable_frame, f, idx)
+            item.pack(side=TOP, fill=X, expand=True)
+            self.items.append(item)
+
         self.breakfast = None
         self.lunch = None
 
@@ -68,7 +73,7 @@ class Menu(tk.Frame):
         canvas.pack(side=LEFT, fill=BOTH, expand=True)
         scrollbar.pack(side=RIGHT, fill=Y)
         
-        files = listdir(f'data/{cat}')
+        files = listdir(f'{database}/{cat}')
         self.items = list()
         for idx, f in enumerate(files):
             item = Item(self.scrollable_frame, f, idx)
@@ -211,5 +216,7 @@ class PageOne(tk.Frame):
 
 
 if __name__ == '__main__':
+    database = 'data'
+    data = Data(database)
     gui = GUI()
     gui.mainloop()
