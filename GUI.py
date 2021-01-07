@@ -7,6 +7,9 @@ from os import listdir
 from os.path import isdir
 from PIL import ImageTk, Image
 import argparse
+import codecs
+import copy
+sys.stdout = codecs.getwriter("utf-8")(sys.stdout.detach())
 
 scale = 1
 W, H = 800, 600
@@ -20,28 +23,23 @@ class Data:
         self.gender = None
         self.age = None
         self.exercise = None
-        
-        print(database)
-        d = list(listdir(database))
-        print(d)
-        sys.exit()
+
+        FOOD = dict()        
         for d in listdir(database):
             for f in listdir(f'{database}/{d}'):
-                print(f)
-        sys.exit()
-        self.items = list()
-        for idx, f in enumerate(files):
-            item = Item(self.scrollable_frame, f, idx)
-            item.pack(side=TOP, fill=X, expand=True)
-            self.items.append(item)
+                ss = f.split('.')[0]
+                FOOD[ss] = 0
 
-        self.breakfast = None
-        self.lunch = None
+        self.breakfast = copy.deepcopy(FOOD)
+        self.lunch = copy.deepcopy(FOOD)
 
 class Item(tk.Frame):
-    def __init__(self, master, name, idx):
+    def __init__(self, master, name, idx, data):
         tk.Frame.__init__(self, master)
+        self.meal = master.meal
         self.configure(bg='white')
+        self.data = data
+        self.mainFrame = master.mainFrame
         textSize = 18
         fontStyle = tkFont.Font(family="Noto Sans Mono CJK TC", size=textSize, weight='bold')
  
@@ -50,16 +48,38 @@ class Item(tk.Frame):
         amount = list(range(100))
         self.comb = ttk.Combobox(self, width=5, values=amount, font=fontStyle)
         self.comb.current(0)
+        self.comb.bind('<<ComboboxSelected>>', self.modified)
         self.comb.pack(side='right')
+
+    def modified(self, event):
+        if self.meal == 'breakfast':
+            self.data.breakfast[self.labelName.cget('text')] = int(self.comb.get())
+            ss = 'Your Choice:\n'
+            for key, value in self.data.breakfast.items():
+                if value != 0:
+                    ss += f'{key}:{value}\n'
+            self.mainFrame.labelCurrent.configure(text=ss)
+        else:
+            self.data.lunch[self.labelName.cget('text')] = int(self.comb.get())
+            ss = 'Your Choice:\n'
+            for key, value in self.data.lunch.items():
+                if value != 0:
+                    ss += f'{key}:{value}\n'
+            self.mainFrame.labelCurrent.configure(text=ss)
 
 class Menu(tk.Frame):
     def __init__(self, master, cat):
         tk.Frame.__init__(self, master)
-        
-        canvas = tk.Canvas(self, bg='blue')
+        self.master = master
+        self.data = master.data
+        self.meal = master.meal
+        self.mainFrame = master
+        canvas = tk.Canvas(self, bg='white')
         scrollbar = tk.Scrollbar(self, orient="vertical", command=canvas.yview)
         self.scrollable_frame = tk.Frame(canvas, bg='red')
         self.scrollable_frame.pack(side=LEFT, fill=X, expand=True)
+        self.scrollable_frame.meal = self.meal
+        self.scrollable_frame.mainFrame = master
         
         self.scrollable_frame.bind(
             "<Configure>",
@@ -76,30 +96,29 @@ class Menu(tk.Frame):
         files = listdir(f'{database}/{cat}')
         self.items = list()
         for idx, f in enumerate(files):
-            item = Item(self.scrollable_frame, f, idx)
+            ss = f.split('.')[0]
+            item = Item(self.scrollable_frame, ss, idx, self.data)
+            if self.meal == 'breakfast':
+                item.comb.current(self.data.breakfast[ss])
+            else:
+                item.comb.current(self.data.lunch[ss])
             item.pack(side=TOP, fill=X, expand=True)
             self.items.append(item)
-        
-        textSize = 18
-        fontStyle = tkFont.Font(family="Noto Sans Mono CJK TC", size=textSize, weight='bold')
-
-        buttonUpdate = tk.Button(canvas, text="確認", bg='#2E75B6', fg='white', font=fontStyle, command=lambda: self.update())
-        buttonUpdate.pack(side=RIGHT, anchor=SE, padx=(0,20), pady=(0,20))
 
     def update(self):
         for item in self.items:
             print(item.labelName.cget('text'), item.comb.get())
 
 class GUI(tk.Tk):
-    def __init__(self):
+    def __init__(self, data):
         tk.Tk.__init__(self)
+        self.data = data
         self.frame = None
         self.title('2020 NYMU Final Project No.12')
         self.geometry(f'{W}x{H}')
         self.configure(background='white')
         self.resizable(0, 0)
         self.switch_frame(StartPage)
-        
     
     def switch_frame(self, frame_class):
         new_frame = frame_class(self)
@@ -111,13 +130,14 @@ class GUI(tk.Tk):
 class StartPage(tk.Frame):
     def __init__(self, master):
         tk.Frame.__init__(self, master)
+        self.data = master.data
         self.master = master
-        self.configure(bg='black')
+        self.configure(bg='white')
 
         textSize = 18
         fontStyle = tkFont.Font(family="Noto Sans Mono CJK TC", size=textSize, weight='bold')
         
-        frame = tk.Frame(self, bg='orange')
+        frame = tk.Frame(self, bg='white')
         frame.pack(fill=BOTH, expand=True, padx=120, pady=100)
 
         frameName = tk.Frame(frame, bg='white')
@@ -169,16 +189,20 @@ class StartPage(tk.Frame):
         combE.pack(side='left')
 
         
-        buttonNext = tk.Button(frame, text="下一步", bg='#2E75B6', fg='white', font=fontStyle, command=lambda: master.switch_frame(PageOne))
+        buttonNext = tk.Button(frame, text="下一步", bg='#2E75B6', fg='white', font=fontStyle, command=lambda: master.switch_frame(PageBreakfast))
         buttonNext.pack(side=TOP, anchor=SE)
         
-class PageOne(tk.Frame):
+class PageBreakfast(tk.Frame):
     def __init__(self, master):
         tk.Frame.__init__(self, master)
+        self.data = master.data
+        self.meal = 'breakfast'
         self.master = master
         self.menu = None
         self.buttonNext = None
-        self.configure(bg='green')
+        self.labelCurrent = None
+        self.listboxCurrent = None
+        self.configure(bg='white')
         
         textSize = 18
         fontStyle = tkFont.Font(family="Noto Sans Mono CJK TC", size=textSize, weight='bold')
@@ -201,6 +225,29 @@ class PageOne(tk.Frame):
         buttonTmp = tk.Button(frameBtn, text='點心', bg='#D9D9D9', fg='black', font=fontStyle, command=lambda: self.switch_frame(Menu, '點心'))
         buttonTmp.pack(side='right',padx=3)
 
+        new_frame = Menu(self, '飯類')
+        if self.menu is not None:
+            self.menu.destroy()
+        self.menu = new_frame
+        self.menu.pack(side=TOP, fill=BOTH, expand=True, padx=50, pady=30)
+        
+        textSize = 18
+        fontStyle = tkFont.Font(family="Noto Sans Mono CJK TC", size=textSize, weight='bold')
+
+        if self.labelCurrent is not None:
+            self.labelCurrent.destroy()
+        ss = '已選取:\n'
+        for key, value in self.data.breakfast.items():
+            if value != 0:
+                ss += f'{key}:{value}\n'
+        self.labelCurrent = tk.Label(self, text=ss, font=fontStyle, bg='white')
+        self.labelCurrent.pack(side=TOP, anchor=NW, padx = (50,0))
+        
+        if self.buttonNext is not None:
+            self.buttonNext.destroy()
+        self.buttonNext = tk.Button(self, text="下一步", bg='#2E75B6', fg='white', font=fontStyle, command=lambda: self.master.switch_frame(PageLunch))
+        self.buttonNext.pack(side=TOP, anchor=SE, padx=(0,30), pady=(0,30))
+
     def switch_frame(self, frame_class, cat):
         new_frame = frame_class(self, cat)
         if self.menu is not None:
@@ -209,14 +256,121 @@ class PageOne(tk.Frame):
         self.menu.pack(side=TOP, fill=BOTH, expand=True, padx=50, pady=30)
         textSize = 18
         fontStyle = tkFont.Font(family="Noto Sans Mono CJK TC", size=textSize, weight='bold')
+
+        if self.labelCurrent is not None:
+            self.labelCurrent.destroy()
+        ss = '已選取:\n'
+        for key, value in self.data.breakfast.items():
+            if value != 0:
+                ss += f'{key}:{value}\n'
+        self.labelCurrent = tk.Label(self, text=ss, font=fontStyle, bg='white')
+        self.labelCurrent.pack(side=TOP, anchor=NW, padx = (50,0))
+        
         if self.buttonNext is not None:
             self.buttonNext.destroy()
-        self.buttonNext = tk.Button(self, text="下一步", bg='#2E75B6', fg='white', font=fontStyle)
+        self.buttonNext = tk.Button(self, text="下一步", bg='#2E75B6', fg='white', font=fontStyle, command=lambda: self.master.switch_frame(PageLunch))
+        self.buttonNext.pack(side=TOP, anchor=SE, padx=(0,30), pady=(0,30))
+        
+class PageLunch(tk.Frame):
+    def __init__(self, master):
+        tk.Frame.__init__(self, master)
+        self.data = master.data
+        self.meal = 'lunch'
+        self.master = master
+        self.menu = None
+        self.buttonNext = None
+        self.labelCurrent = None
+        self.listboxCurrent = None
+        self.configure(bg='white')
+        
+        textSize = 18
+        fontStyle = tkFont.Font(family="Noto Sans Mono CJK TC", size=textSize, weight='bold')
+
+        frameBtn = tk.Frame(self, bg='white')
+        frameBtn.pack(side=TOP)
+        labelBtn = tk.Label(frameBtn, text="今日午餐：", font=fontStyle, bg='white')
+        labelBtn.pack(side='left')
+
+        buttonTmp = tk.Button(frameBtn, text='奶類', bg='#D9D9D9', fg='black', font=fontStyle, command=lambda: self.switch_frame(Menu, '奶類'))
+        buttonTmp.pack(side='right',padx=3)
+        buttonTmp = tk.Button(frameBtn, text='穀飲', bg='#D9D9D9', fg='black', font=fontStyle, command=lambda: self.switch_frame(Menu, '穀飲'))
+        buttonTmp.pack(side='right',padx=3)
+        buttonTmp = tk.Button(frameBtn, text='飯類', bg='#D9D9D9', fg='black', font=fontStyle, command=lambda: self.switch_frame(Menu, '飯類'))
+        buttonTmp.pack(side='right',padx=3)
+        buttonTmp = tk.Button(frameBtn, text='麵包', bg='#D9D9D9', fg='black', font=fontStyle, command=lambda: self.switch_frame(Menu, '麵包'))
+        buttonTmp.pack(side='right',padx=3)
+        buttonTmp = tk.Button(frameBtn, text='麵類', bg='#D9D9D9', fg='black', font=fontStyle, command=lambda: self.switch_frame(Menu, '麵類'))
+        buttonTmp.pack(side='right',padx=3)
+        buttonTmp = tk.Button(frameBtn, text='點心', bg='#D9D9D9', fg='black', font=fontStyle, command=lambda: self.switch_frame(Menu, '點心'))
+        buttonTmp.pack(side='right',padx=3)
+
+        new_frame = Menu(self, '飯類')
+        if self.menu is not None:
+            self.menu.destroy()
+        self.menu = new_frame
+        self.menu.pack(side=TOP, fill=BOTH, expand=True, padx=50, pady=30)
+        
+        textSize = 18
+        fontStyle = tkFont.Font(family="Noto Sans Mono CJK TC", size=textSize, weight='bold')
+
+        if self.labelCurrent is not None:
+            self.labelCurrent.destroy()
+        ss = '已選取:\n'
+        for key, value in self.data.lunch.items():
+            if value != 0:
+                ss += f'{key}:{value}\n'
+        self.labelCurrent = tk.Label(self, text=ss, font=fontStyle, bg='white')
+        self.labelCurrent.pack(side=TOP, anchor=NW, padx = (50,0))
+        
+        if self.buttonNext is not None:
+            self.buttonNext.destroy()
+        self.buttonNext = tk.Button(self, text="下一步", bg='#2E75B6', fg='white', font=fontStyle, command=lambda: self.master.switch_frame(PageLunch))
         self.buttonNext.pack(side=TOP, anchor=SE, padx=(0,30), pady=(0,30))
 
+    def switch_frame(self, frame_class, cat):
+        new_frame = frame_class(self, cat)
+        if self.menu is not None:
+            self.menu.destroy()
+        self.menu = new_frame
+        self.menu.pack(side=TOP, fill=BOTH, expand=True, padx=50, pady=30)
+        textSize = 18
+        fontStyle = tkFont.Font(family="Noto Sans Mono CJK TC", size=textSize, weight='bold')
+
+        if self.labelCurrent is not None:
+            self.labelCurrent.destroy()
+        ss = '已選取:\n'
+        for key, value in self.data.lunch.items():
+            if value != 0:
+                ss += f'{key}:{value}\n'
+        self.labelCurrent = tk.Label(self, text=ss, font=fontStyle, bg='white')
+        self.labelCurrent.pack(side=TOP, anchor=NW, padx = (50,0))
+        
+        if self.buttonNext is not None:
+            self.buttonNext.destroy()
+        self.buttonNext = tk.Button(self, text="下一步", bg='#2E75B6', fg='white', font=fontStyle, command=lambda: self.master.switch_frame(PageSuggestion))
+        self.buttonNext.pack(side=TOP, anchor=SE, padx=(0,30), pady=(0,30))  
+
+class PageSuggestion(tk.Frame):
+    def __init__(self, master):
+        tk.Frame.__init__(self, master)
+        self.data = master.data
+        self.master = master
+        self.configure(bg='white')
+
+        textSize = 18
+        fontStyle = tkFont.Font(family="Noto Sans Mono CJK TC", size=textSize, weight='bold')
+        
+        ss = '你的BMI指數是： AA.A (過輕)\n'
+        labelBMI = tk.Label(self, text=ss, font=fontStyle, bg='white')
+        labelBMI.pack(side=TOP, anchor=NW, padx=(50,0), pady=(50,0))
+        
+        label = tk.Label(self, text='建議結果：', font=fontStyle, bg='white')
+        label.pack(side=TOP, anchor=NW, padx=(50,0), pady=(20,0))
+
+        
 
 if __name__ == '__main__':
     database = 'data'
     data = Data(database)
-    gui = GUI()
+    gui = GUI(data)
     gui.mainloop()
