@@ -364,6 +364,10 @@ class PageSuggestion(tk.Frame):
         textSize = 18
         fontStyle = tkFont.Font(family="Noto Sans Mono CJK TC", size=textSize, weight='bold')
         
+        '''
+        >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>Add your code here<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+        '''
+
         ss = '你的BMI指數是： AA.A (過輕)\n'
         labelBMI = tk.Label(self, text=ss, font=fontStyle, bg='white')
         labelBMI.pack(side=TOP, anchor=NW, padx=(50,0), pady=(50,0))
