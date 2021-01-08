@@ -20,6 +20,9 @@ exercise = ['久坐(辦公室工作、沒有運動習慣)',     # 1
             '高度(運動6-7天/週)',               # 4
             '極高度(運動員等級，每天運動2次)']   # 5
 
+KCAL = dict()
+KCAL['milk'] = 50
+
 class Data:
     def __init__(self, database):
         self.name = None # type: string
@@ -374,6 +377,11 @@ class PageSuggestion(tk.Frame):
         # self.data.breakfast dict
         # self.data.lunch dict
         '''
+        print(self.data.breakfast.keys())
+        kcal = 0
+        for key, value in self.data.breakfast.items():
+            kcal += KCAL[key]*value
+            print(key, value)
 
         ss = '你的BMI指數是： AA.A (過輕)\n'
         labelBMI = tk.Label(self, text=ss, font=fontStyle, bg='white')
