@@ -366,6 +366,13 @@ class PageSuggestion(tk.Frame):
         
         '''
         >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>Add your code here<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+        # self.data.name str
+        # self.data.height float
+        # self.data.weight float
+        # self.data.gender int (0->female 1->male)
+        # self.data.age int
+        # self.data.breakfast dict
+        # self.data.lunch dict
         '''
 
         ss = '你的BMI指數是： AA.A (過輕)\n'
