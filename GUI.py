@@ -377,11 +377,6 @@ class PageSuggestion(tk.Frame):
         # self.data.breakfast dict
         # self.data.lunch dict
         '''
-        print(self.data.breakfast.keys())
-        kcal = 0
-        for key, value in self.data.breakfast.items():
-            kcal += KCAL[key]*value
-            print(key, value)
 
         ss = '你的BMI指數是： AA.A (過輕)\n'
         labelBMI = tk.Label(self, text=ss, font=fontStyle, bg='white')
@@ -389,6 +384,18 @@ class PageSuggestion(tk.Frame):
         
         label = tk.Label(self, text='建議結果：', font=fontStyle, bg='white')
         label.pack(side=TOP, anchor=NW, padx=(50,0), pady=(20,0))
+        
+        # Create a photoimage object of the image in the path
+        image_path = f'data/奶類/80多多-原味_反.JPG'
+        image = Image.open(image_path)
+        image.thumbnail((300, 300))
+        test = ImageTk.PhotoImage(image)
+
+        labelImg = tk.Label(self, image=test)
+        labelImg.image = test
+
+        # Position image
+        labelImg.pack(side=TOP)
 
         print(self.data)
 
